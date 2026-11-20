@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SalesLab — Análise Financeira com IA para PMEs</title>
+  <meta name="description" content="O SalesLab analisa os dados financeiros da sua empresa em 2 minutos. KPIs, alertas, previsões e recomendações concretas. Sem consultores. Sem Excel."/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:title" content="SalesLab — Análise Financeira com IA"/>
+  <meta property="og:description" content="Relatórios de gestão gerados por IA em 2 minutos. Para PMEs que não têm analistas financeiros."/>
+  <meta property="og:type" content="website"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:       #080808;
+      --s1:       #101010;
+      --s2:       #161616;
+      --s3:       #1e1e1e;
+      --gold:     #c9a84c;
+      --gold-l:   #e2c47a;
+      --gold-d:   #7a5f2a;
+      --gold-g:   rgba(201,168,76,0.08);
+      --white:    #f0ede8;
+      --off:      #b8b4ae;
+      --muted:    #555;
+      --muted2:   #777;
+      --pos:      #2ecc71;
+      --warn:     #e67e22;
+      --crit:     #e74c3c;
+      --r:        6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ── NOISE OVERLAY ─────────────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 1000; opacity: .4;
+    }
+
+    /* ── NAV ───────────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,8,8,.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(201,168,76,.1);
+      transition: padding .3s;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 30px; height: 30px;
+    }
+    .nav-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem; font-weight: 600;
+      color: var(--white); letter-spacing: .03em;
+    }
+    .nav-logo-text span { color: var(--gold); }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 32px; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted2); text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    .nav-cta {
+      background: var(--gold); color: #000 !important;
+      padding: 8px 18px; border-radius: var(--r);
+      font-weight: 500 !important;
+    }
+    .nav-cta:hover { opacity: .88; }
+
+    /* ── HERO ──────────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Radial glow background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(201,168,76,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Grid lines */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .22em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeUp .8s ease both;
+    }
+    .hero-eyebrow::before,
+    .hero-eyebrow::after {
+      content: ''; width: 28px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold));
+    }
+    .hero-eyebrow::after { transform: scaleX(-1); }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 300; line-height: 1.08;
+      letter-spacing: -.01em;
+      max-width: 820px; margin: 0 auto 24px;
+      animation: fadeUp .8s ease .1s both;
+    }
+    .hero-title em {
+      font-style: italic; color: var(--gold);
+    }
+    .hero-title strong {
+      font-weight: 600;
+    }
+
+    .hero-sub {
+      font-size: clamp(.9rem, 1.5vw, 1.05rem);
+      color: var(--off); line-height: 1.75;
+      max-width: 520px; margin: 0 auto 44px;
+      font-weight: 300;
+      animation: fadeUp .8s ease .2s both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp .8s ease .3s both;
+    }
+
+    .btn-primary {
+      background: var(--gold); color: #000;
+      padding: 14px 32px; border-radius: var(--r);
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem; font-weight: 500; letter-spacing: .08em;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s; border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: var(--gold-l); transform: translateY(-1px); }
+
+    .btn-ghost {
+      color: var(--off); border: 1px solid rgba(255,255,255,.12);
+      padding: 13px 28px; border-radius: var(--r);
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem; letter-spacing: .08em;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    .hero-proof {
+      margin-top: 56px;
+      display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp .8s ease .4s both;
+    }
+    .proof-item {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .1em; color: var(--muted2);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .proof-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+    /* ── TICKER ────────────────────────────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid rgba(201,168,76,.1);
+      border-bottom: 1px solid rgba(201,168,76,.1);
+      padding: 12px 0;
+      background: var(--s1);
+    }
+    .ticker {
+      display: flex; gap: 60px;
+      animation: ticker 30s linear infinite;
+      width: max-content;
+    }
+    .ticker-item {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .14em; color: var(--muted);
+      text-transform: uppercase; white-space: nowrap;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ticker-item span { color: var(--gold); }
+    @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+
+    /* ── SECTION COMMON ────────────────────────────────────────────────────── */
+    section { padding: 100px 24px; }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 300; line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-body {
+      font-size: .95rem; color: var(--off);
+      line-height: 1.8; max-width: 520px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+    .container-sm { max-width: 760px; margin: 0 auto; }
+
+    /* ── PROBLEM ───────────────────────────────────────────────────────────── */
+    #problema {
+      background: var(--s1);
+      border-top: 1px solid rgba(201,168,76,.08);
+      border-bottom: 1px solid rgba(201,168,76,.08);
+    }
+    .problem-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+      max-width: 1000px; margin: 0 auto;
+    }
+    .problem-list { list-style: none; display: flex; flex-direction: column; gap: 20px; }
+    .problem-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 20px; border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.05);
+      background: rgba(255,255,255,.02);
+      transition: border-color .3s;
+    }
+    .problem-item:hover { border-color: rgba(201,168,76,.2); }
+    .problem-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: rgba(201,168,76,.08); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .problem-text h4 {
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      font-size: .92rem; margin-bottom: 4px;
+    }
+    .problem-text p { font-size: .82rem; color: var(--muted2); line-height: 1.6; }
+
+    /* ── MODULES ───────────────────────────────────────────────────────────── */
+    .modules-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 16px; margin-top: 56px;
+    }
+    .module-card {
+      background: var(--s1); border: 1px solid rgba(201,168,76,.1);
+      border-radius: 10px; padding: 28px;
+      position: relative; overflow: hidden;
+      transition: border-color .3s, transform .3s;
+    }
+    .module-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .module-card:hover { border-color: rgba(201,168,76,.3); transform: translateY(-3px); }
+    .module-card:hover::before { opacity: 1; }
+    .module-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem; font-weight: 300; color: rgba(201,168,76,.12);
+      line-height: 1; margin-bottom: 12px;
+    }
+    .module-name {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 8px;
+    }
+    .module-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 600; margin-bottom: 10px;
+    }
+    .module-desc { font-size: .83rem; color: var(--muted2); line-height: 1.65; }
+    .module-kpis {
+      margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .kpi-tag {
+      font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .06em;
+      padding: 3px 8px; border-radius: 3px;
+      background: rgba(201,168,76,.08); color: var(--gold-d);
+      border: 1px solid rgba(201,168,76,.15);
+    }
+
+    /* ── HOW IT WORKS ──────────────────────────────────────────────────────── */
+    #como-funciona { background: var(--s1); }
+    .steps {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 0; margin-top: 56px; position: relative;
+    }
+    .steps::before {
+      content: ''; position: absolute;
+      top: 28px; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,.3), rgba(201,168,76,.3), transparent);
+    }
+    .step {
+      padding: 0 20px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--s2); border: 1px solid rgba(201,168,76,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem; font-weight: 600; color: var(--gold);
+      position: relative; z-index: 1;
+      transition: background .3s, border-color .3s;
+    }
+    .step:hover .step-num { background: rgba(201,168,76,.12); border-color: var(--gold); }
+    .step-title {
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      font-size: .9rem; color: var(--white);
+    }
+    .step-desc { font-size: .78rem; color: var(--muted2); line-height: 1.6; }
+
+    /* ── DEMO REPORT ───────────────────────────────────────────────────────── */
+    .demo-wrap {
+      margin-top: 64px;
+      background: var(--s1); border: 1px solid rgba(201,168,76,.14);
+      border-radius: 12px; overflow: hidden; position: relative;
+    }
+    .demo-wrap::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .demo-bar {
+      background: var(--s2); padding: 12px 20px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-bar-label {
+      font-family: 'DM Mono', monospace; font-size: .65rem;
+      color: var(--muted2); margin-left: 8px; letter-spacing: .1em;
+    }
+    .demo-content { padding: 24px; }
+    .demo-kpis {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px;
+    }
+    .demo-kpi {
+      background: var(--s2); border: 1px solid rgba(201,168,76,.1);
+      border-radius: var(--r); padding: 14px;
+    }
+    .demo-kpi-label {
+      font-family: 'DM Mono', monospace; font-size: .58rem;
+      color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .demo-kpi-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 700; line-height: 1; margin-bottom: 4px;
+    }
+    .demo-kpi-change { font-family: 'DM Mono', monospace; font-size: .62rem; }
+    .up { color: var(--pos); } .down { color: var(--crit); }
+    .demo-alerts { display: flex; flex-direction: column; gap: 8px; }
+    .demo-alert {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 14px; border-radius: var(--r); font-size: .8rem; line-height: 1.5;
+    }
+    .demo-alert-pos { background: rgba(46,204,113,.08); border: 1px solid rgba(46,204,113,.2); color: #2ecc71; }
+    .demo-alert-warn { background: rgba(230,126,34,.08); border: 1px solid rgba(230,126,34,.2); color: #e67e22; }
+    .demo-alert-crit { background: rgba(231,76,60,.08); border: 1px solid rgba(231,76,60,.2); color: #e74c3c; }
+
+    /* ── PRICING ───────────────────────────────────────────────────────────── */
+    #precos { background: var(--bg); }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 14px; margin-top: 56px; align-items: start;
+    }
+    .pricing-card {
+      background: var(--s1); border: 1px solid rgba(201,168,76,.12);
+      border-radius: 10px; padding: 28px;
+      position: relative; overflow: hidden;
+      transition: transform .3s, border-color .3s;
+    }
+    .pricing-card:hover { transform: translateY(-4px); border-color: rgba(201,168,76,.3); }
+    .pricing-card.featured {
+      border-color: var(--gold); background: rgba(201,168,76,.04);
+    }
+    .pricing-card.featured::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .pricing-featured-badge {
+      position: absolute; top: -1px; right: 20px;
+      background: var(--gold); color: #000;
+      font-family: 'DM Mono', monospace; font-size: .55rem;
+      letter-spacing: .1em; text-transform: uppercase; font-weight: 500;
+      padding: 3px 10px; border-radius: 0 0 4px 4px;
+    }
+    .pricing-plan {
+      font-family: 'DM Mono', monospace; font-size: .68rem;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 16px;
+    }
+    .pricing-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.6rem; font-weight: 600; line-height: 1;
+      margin-bottom: 4px;
+    }
+    .pricing-price sup {
+      font-size: 1.2rem; vertical-align: top; margin-top: 8px;
+      font-weight: 300;
+    }
+    .pricing-period {
+      font-size: .75rem; color: var(--muted2); margin-bottom: 20px;
+      font-family: 'DM Mono', monospace; letter-spacing: .06em;
+    }
+    .pricing-divider {
+      height: 1px; background: rgba(255,255,255,.06); margin: 20px 0;
+    }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .pricing-features li {
+      font-size: .8rem; color: var(--off);
+      display: flex; align-items: flex-start; gap: 9px; line-height: 1.45;
+    }
+    .pricing-features li::before {
+      content: '✓'; color: var(--gold); font-family: 'DM Mono', monospace;
+      font-size: .7rem; flex-shrink: 0; margin-top: 1px;
+    }
+    .pricing-features li.locked { color: var(--muted); }
+    .pricing-features li.locked::before { content: '—'; color: var(--muted); }
+    .pricing-annual {
+      font-family: 'DM Mono', monospace; font-size: .62rem;
+      color: var(--gold-d); letter-spacing: .07em; margin-top: 12px;
+    }
+    .pricing-cta {
+      display: block; width: 100%; margin-top: 20px;
+      background: rgba(201,168,76,.1); color: var(--gold);
+      border: 1px solid rgba(201,168,76,.25); border-radius: var(--r);
+      padding: 11px; text-align: center; text-decoration: none;
+      font-family: 'DM Mono', monospace; font-size: .72rem; letter-spacing: .08em;
+      transition: all .2s; cursor: pointer;
+    }
+    .pricing-cta:hover { background: rgba(201,168,76,.18); border-color: var(--gold); }
+    .pricing-cta.primary { background: var(--gold); color: #000; border-color: var(--gold); }
+    .pricing-cta.primary:hover { background: var(--gold-l); }
+
+    /* ── FAQ ───────────────────────────────────────────────────────────────── */
+    #faq { background: var(--s1); }
+    .faq-list { margin-top: 48px; display: flex; flex-direction: column; gap: 2px; }
+    .faq-item {
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .faq-q {
+      padding: 20px 0; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 20px;
+      font-size: .95rem; font-weight: 400; color: var(--white);
+      transition: color .2s; user-select: none;
+    }
+    .faq-q:hover { color: var(--gold); }
+    .faq-arrow {
+      font-size: .7rem; color: var(--gold); flex-shrink: 0;
+      transition: transform .3s; font-family: 'DM Mono', monospace;
+    }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a {
+      font-size: .88rem; color: var(--muted2); line-height: 1.75;
+      max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .3s;
+    }
+    .faq-item.open .faq-a { max-height: 200px; padding-bottom: 20px; }
+
+    /* ── CTA FINAL ─────────────────────────────────────────────────────────── */
+    #comecar {
+      background: var(--bg);
+      text-align: center; padding: 120px 24px;
+      position: relative; overflow: hidden;
+    }
+    #comecar::before {
+      content: ''; position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(201,168,76,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .final-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 300; line-height: 1.1; margin-bottom: 20px;
+    }
+    .final-title em { font-style: italic; color: var(--gold); }
+    .final-sub {
+      font-size: .95rem; color: var(--off); max-width: 460px;
+      margin: 0 auto 40px; line-height: 1.75;
+    }
+
+    /* ── FOOTER ────────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--s1);
+      border-top: 1px solid rgba(201,168,76,.1);
+      padding: 48px 48px 32px;
+    }
+    .footer-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 40px; margin-bottom: 40px; flex-wrap: wrap;
+    }
+    .footer-brand .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 600; color: var(--white);
+    }
+    .footer-brand .logo-text span { color: var(--gold); }
+    .footer-brand p {
+      font-size: .78rem; color: var(--muted2); margin-top: 8px;
+      max-width: 220px; line-height: 1.6;
+    }
+    .footer-links h4 {
+      font-family: 'DM Mono', monospace; font-size: .62rem;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold-d); margin-bottom: 14px;
+    }
+    .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-links a {
+      font-size: .82rem; color: var(--muted2); text-decoration: none;
+      transition: color .2s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.05);
+      padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom p {
+      font-family: 'DM Mono', monospace; font-size: .62rem;
+      color: var(--muted); letter-spacing: .07em;
+    }
+    .footer-legal {
+      display: flex; gap: 20px;
+    }
+    .footer-legal a {
+      font-family: 'DM Mono', monospace; font-size: .62rem;
+      color: var(--muted); text-decoration: none; letter-spacing: .07em;
+      transition: color .2s;
+    }
+    .footer-legal a:hover { color: var(--gold); }
+
+    /* ── ANIMATIONS ────────────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ────────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .problem-grid { grid-template-columns: 1fr; gap: 40px; }
+      .modules-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .steps::before { display: none; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .demo-kpis { grid-template-columns: 1fr 1fr; }
+      footer { padding: 40px 24px 24px; }
+      .footer-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg class="nav-logo-icon" viewBox="0 0 30 30" fill="none">
+      <rect x="2" y="18" width="5" height="8" rx="1" stroke="#c9a84c" stroke-width="1.2"/>
+      <rect x="11" y="11" width="5" height="15" rx="1" stroke="#c9a84c" stroke-width="1.2"/>
+      <rect x="20" y="5" width="5" height="21" rx="1" stroke="#c9a84c" stroke-width="1.2"/>
+      <path d="M3.5 15L13.5 8L22.5 3" stroke="#c9a84c" stroke-width="1" stroke-linecap="round" stroke-dasharray="2 2"/>
+      <circle cx="22.5" cy="3" r="1.5" fill="#c9a84c"/>
+    </svg>
+    <span class="nav-logo-text">Sales<span>Lab</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#produto">Produto</a></li>
+    <li><a href="#como-funciona">Como funciona</a></li>
+    <li><a href="#precos">Preços</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="https://sales-lab-lovat.vercel.app" class="nav-cta">Entrar →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Análise financeira com IA</div>
+  <h1 class="hero-title">
+    O seu negócio merece<br>
+    análise <em>de nível CFO</em>.<br>
+    <strong>Em 2 minutos.</strong>
+  </h1>
+  <p class="hero-sub">
+    O SalesLab analisa os dados financeiros da sua PME e devolve KPIs, alertas, previsões e recomendações concretas — sem consultores, sem Excel, sem horas perdidas.
+  </p>
+  <div class="hero-actions">
+    <a href="https://sales-lab-lovat.vercel.app" class="btn-primary">
+      Começar grátis
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#produto" class="btn-ghost">Ver como funciona</a>
+  </div>
+  <div class="hero-proof">
+    <div class="proof-item"><div class="proof-dot"></div>Sem cartão de crédito</div>
+    <div class="proof-item"><div class="proof-dot"></div>Dados nunca armazenados</div>
+    <div class="proof-item"><div class="proof-dot"></div>Resultados em 2 minutos</div>
+    <div class="proof-item"><div class="proof-dot"></div>4 módulos de análise</div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="ticker-item">Análise de Vendas <span>→</span></div>
+    <div class="ticker-item">Eficiência Operacional <span>→</span></div>
+    <div class="ticker-item">Redução de Custos <span>→</span></div>
+    <div class="ticker-item">Relatório Financeiro P&L <span>→</span></div>
+    <div class="ticker-item">Chatbot com IA <span>→</span></div>
+    <div class="ticker-item">Export PDF <span>→</span></div>
+    <div class="ticker-item">Previsão do próximo período <span>→</span></div>
+    <div class="ticker-item">KPIs automáticos <span>→</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item">Análise de Vendas <span>→</span></div>
+    <div class="ticker-item">Eficiência Operacional <span>→</span></div>
+    <div class="ticker-item">Redução de Custos <span>→</span></div>
+    <div class="ticker-item">Relatório Financeiro P&L <span>→</span></div>
+    <div class="ticker-item">Chatbot com IA <span>→</span></div>
+    <div class="ticker-item">Export PDF <span>→</span></div>
+    <div class="ticker-item">Previsão do próximo período <span>→</span></div>
+    <div class="ticker-item">KPIs automáticos <span>→</span></div>
+  </div>
+</div>
+
+<!-- PROBLEMA -->
+<section id="produto">
+  <div class="container">
+    <div class="problem-grid">
+      <div class="reveal">
+        <div class="section-label">O problema</div>
+        <h2 class="section-title">As PMEs gerem<br><em>às cegas.</em></h2>
+        <p class="section-body">
+          A maioria dos gestores de PME toma decisões baseadas em intuição e Excel. Não porque não se importem com os dados — mas porque não têm tempo nem recursos para os analisar correctamente.
+        </p>
+        <br/>
+        <p class="section-body">
+          O SalesLab muda isso. Carrega os dados que já tens. Em 2 minutos tens a análise que um consultor financeiro demoraria horas a produzir.
+        </p>
+      </div>
+      <ul class="problem-list reveal">
+        <li class="problem-item">
+          <div class="problem-icon">⏱</div>
+          <div class="problem-text">
+            <h4>Horas perdidas em Excel</h4>
+            <p>Construir relatórios manuais consome tempo que deveria ir para o negócio.</p>
+          </div>
+        </li>
+        <li class="problem-item">
+          <div class="problem-icon">💸</div>
+          <div class="problem-text">
+            <h4>Consultores inacessíveis</h4>
+            <p>Análise financeira profissional custa centenas de euros por hora. Fora do alcance da maioria das PMEs.</p>
+          </div>
+        </li>
+        <li class="problem-item">
+          <div class="problem-icon">🔍</div>
+          <div class="problem-text">
+            <h4>Padrões invisíveis</h4>
+            <p>Cruzar dados de vendas, custos e eficiência manualmente é quase impossível. Os problemas ficam escondidos.</p>
+          </div>
+        </li>
+        <li class="problem-item">
+          <div class="problem-icon">⚡</div>
+          <div class="problem-text">
+            <h4>Decisões lentas</h4>
+            <p>Sem dados acessíveis e claros, as decisões demoram — e as oportunidades passam.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- MÓDULOS -->
+<section style="background:var(--s1); border-top:1px solid rgba(201,168,76,.08); border-bottom:1px solid rgba(201,168,76,.08)">
+  <div class="container">
+    <div class="container-sm reveal">
+      <div class="section-label">Os 4 módulos</div>
+      <h2 class="section-title">Tudo o que precisa<br>para <em>gerir com dados.</em></h2>
+    </div>
+    <div class="modules-grid reveal">
+
+      <div class="module-card">
+        <div class="module-num">01</div>
+        <div class="module-name">Módulo de Vendas</div>
+        <div class="module-title">Performance comercial completa</div>
+        <div class="module-desc">Receita, metas, top produtos, top clientes, top vendedores e previsão para o próximo período com intervalo de confiança.</div>
+        <div class="module-kpis">
+          <span class="kpi-tag">Receita total</span>
+          <span class="kpi-tag">Taxa de retenção</span>
+          <span class="kpi-tag">Top clientes</span>
+          <span class="kpi-tag">Previsão</span>
+          <span class="kpi-tag">Alertas automáticos</span>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">02</div>
+        <div class="module-name">Módulo de Eficiência</div>
+        <div class="module-title">Produtividade e bottlenecks</div>
+        <div class="module-desc">Taxa de ocupação, produtividade por colaborador, identificação de bottlenecks críticos e gap de receita potencial em euros.</div>
+        <div class="module-kpis">
+          <span class="kpi-tag">Output por colaborador</span>
+          <span class="kpi-tag">Custo por unidade</span>
+          <span class="kpi-tag">Bottlenecks</span>
+          <span class="kpi-tag">Gap potencial €</span>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">03</div>
+        <div class="module-name">Módulo de Custos</div>
+        <div class="module-title">Poupanças identificadas em euros</div>
+        <div class="module-desc">Detecção de anomalias, contratos desactualizados, benchmarking sectorial e total recuperável calculado com precisão.</div>
+        <div class="module-kpis">
+          <span class="kpi-tag">Total recuperável</span>
+          <span class="kpi-tag">Anomalias detectadas</span>
+          <span class="kpi-tag">Benchmarking</span>
+          <span class="kpi-tag">Prioridades de acção</span>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="module-num">04</div>
+        <div class="module-name">Módulo Financeiro</div>
+        <div class="module-title">P&L de nível CFO</div>
+        <div class="module-desc">Demonstração de resultados simplificada com EBITDA, margens brutas e líquidas, cash flow e alertas de saúde financeira.</div>
+        <div class="module-kpis">
+          <span class="kpi-tag">EBITDA</span>
+          <span class="kpi-tag">Margem bruta</span>
+          <span class="kpi-tag">Resultado líquido</span>
+          <span class="kpi-tag">Saúde financeira</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como-funciona">
+  <div class="container">
+    <div class="container-sm reveal">
+      <div class="section-label">O processo</div>
+      <h2 class="section-title">De dados a decisões<br><em>em 4 passos.</em></h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Escolhe o módulo</div>
+        <div class="step-desc">Vendas, Eficiência, Custos ou Financeiro — consoante o que precisa analisar.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Carrega os dados</div>
+        <div class="step-desc">Ficheiro Excel, CSV, PDF ou texto copiado. Qualquer formato que já usa.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">IA analisa tudo</div>
+        <div class="step-desc">O sistema processa os dados e gera o relatório completo em 15 a 45 segundos.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Decide e age</div>
+        <div class="step-desc">KPIs, alertas, previsões e recomendações concretas com impacto estimado em euros.</div>
+      </div>
+    </div>
+
+    <!-- Demo report -->
+    <div class="demo-wrap reveal">
+      <div class="demo-bar">
+        <div class="demo-dot" style="background:#e74c3c"></div>
+        <div class="demo-dot" style="background:#e67e22"></div>
+        <div class="demo-dot" style="background:#2ecc71"></div>
+        <span class="demo-bar-label">SalesLab · Exemplo de relatório — FisioAtiva · Março 2026</span>
+      </div>
+      <div class="demo-content">
+        <div class="demo-kpis">
+          <div class="demo-kpi">
+            <div class="demo-kpi-label">Receita total</div>
+            <div class="demo-kpi-value">€48.420</div>
+            <div class="demo-kpi-change up">↑ +9,6% vs Fev</div>
+          </div>
+          <div class="demo-kpi">
+            <div class="demo-kpi-label">Consultas</div>
+            <div class="demo-kpi-value">1.247</div>
+            <div class="demo-kpi-change up">↑ +109 consultas</div>
+          </div>
+          <div class="demo-kpi">
+            <div class="demo-kpi-label">Novos pacientes</div>
+            <div class="demo-kpi-value">84</div>
+            <div class="demo-kpi-change up">↑ +18,3%</div>
+          </div>
+          <div class="demo-kpi">
+            <div class="demo-kpi-label">Meta mensal</div>
+            <div class="demo-kpi-value">105,3%</div>
+            <div class="demo-kpi-change up">↑ +€2.420 acima</div>
+          </div>
+        </div>
+        <div class="demo-alerts">
+          <div class="demo-alert demo-alert-pos">✓ Fisioterapia Desportiva cresce 12,4% — capitalizar época primaveril</div>
+          <div class="demo-alert demo-alert-warn">⚠ Dr. André Nunes 5,4% abaixo da meta — avaliar carga ou formação</div>
+          <div class="demo-alert demo-alert-crit">! Reabilitação Pós-Cirurgia representa apenas 1,6% da receita — serviço premium subaproveitado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PREÇOS -->
+<section id="precos">
+  <div class="container">
+    <div class="container-sm reveal" style="text-align:center">
+      <div class="section-label">Preços</div>
+      <h2 class="section-title">Simples. Transparente.<br><em>Sem surpresas.</em></h2>
+      <p class="section-body" style="margin:0 auto">Comece gratuitamente. Faça upgrade quando precisar de mais.</p>
+    </div>
+    <div class="pricing-grid reveal">
+
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Free</div>
+        <div class="pricing-price">€0</div>
+        <div class="pricing-period">para sempre</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>1 módulo à escolha</li>
+          <li>1 análise completa</li>
+          <li>Export PDF</li>
+          <li class="locked">Chatbot com IA</li>
+          <li class="locked">Módulos adicionais</li>
+        </ul>
+        <a href="https://sales-lab-lovat.vercel.app" class="pricing-cta">Começar grátis</a>
+      </div>
+
+      <!-- STARTER -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Starter</div>
+        <div class="pricing-price"><sup>€</sup>59</div>
+        <div class="pricing-period">por mês</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>2 módulos à escolha</li>
+          <li>15 análises por mês</li>
+          <li>Export PDF</li>
+          <li>Suporte por email</li>
+          <li class="locked">Chatbot com IA</li>
+        </ul>
+        <div class="pricing-annual">€566/ano — poupa 20%</div>
+        <a href="https://sales-lab-lovat.vercel.app" onclick="window.location='https://sales-lab-lovat.vercel.app'" class="pricing-cta" style="cursor:pointer">Subscrever Starter →</a>
+      </div>
+
+      <!-- PRO -->
+      <div class="pricing-card featured">
+        <div class="pricing-featured-badge">Mais popular</div>
+        <div class="pricing-plan">Pro</div>
+        <div class="pricing-price"><sup>€</sup>109</div>
+        <div class="pricing-period">por mês</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>4 módulos completos</li>
+          <li>30 análises por mês</li>
+          <li>Export PDF</li>
+          <li>Suporte prioritário</li>
+          <li class="locked">Chatbot com IA</li>
+        </ul>
+        <div class="pricing-annual">€1.046/ano — poupa 20%</div>
+        <a href="javascript:void(0)" onclick="startCheckout('price_1TKVgYF38ciAxkPHKyU1Otxh')" class="pricing-cta primary">Subscrever →</a>
+      </div>
+
+      <!-- TEAM -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Team</div>
+        <div class="pricing-price"><sup>€</sup>199</div>
+        <div class="pricing-period">por mês</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>4 módulos completos</li>
+          <li>Análises ilimitadas</li>
+          <li>Chatbot IA incluído</li>
+          <li>Export PDF da conversa</li>
+          <li>Múltiplos utilizadores</li>
+        </ul>
+        <div class="pricing-annual">€1.910/ano — poupa 20%</div>
+        <a href="javascript:void(0)" onclick="startCheckout('price_1TKVh6F38ciAxkPHSwZY0xDG')" class="pricing-cta">Subscrever →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container-sm" style="max-width:680px;margin:0 auto">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">Dúvidas frequentes</div>
+      <h2 class="section-title">Perguntas <em>e respostas.</em></h2>
+    </div>
+    <div class="faq-list reveal">
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Os meus dados ficam guardados no sistema?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">Não. O SalesLab é um sistema stateless — os dados são processados em memória, o relatório é gerado, e os dados são descartados. Não existe base de dados com informação da sua empresa. Cada sessão é completamente independente e isolada.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Que tipo de ficheiros posso carregar?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">Aceitamos qualquer formato que já use: Excel (.xlsx, .xls), CSV, PDF, ou texto copiado directamente. Não precisa de preparar ficheiros especiais — use os relatórios que já tem do seu CRM, software de contabilidade (Primavera, SAP, PHC) ou folhas Excel.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          E se os meus dados estiverem incompletos?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">O sistema analisa sempre o que está disponível e indica claramente o que está em falta. Dados parciais produzem relatórios parciais mas sempre úteis — nunca rejeita uma submissão por formato ou incompletude.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Quanto tempo demora a gerar um relatório?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">Entre 15 e 45 segundos, dependendo do volume de dados. O chatbot responde em 3 a 8 segundos por mensagem em tempo real.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          O que é o chatbot do plano Team?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">Após gerar relatórios em qualquer módulo, pode abrir o assistente e fazer perguntas em linguagem natural sobre o negócio. O assistente cruza informação entre todos os módulos em simultâneo e responde como um CFO: com números reais, prioridades concretas e impacto estimado em euros. A conversa pode ser exportada em PDF.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Posso cancelar quando quiser?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">Sim. Não há contratos de longa duração. Pode cancelar a qualquer momento sem penalização. O desconto anual aplica-se apenas se pagar o ano completo antecipadamente.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="comecar">
+  <div class="container-sm reveal" style="text-align:center">
+    <div class="section-label">Comece hoje</div>
+    <h2 class="final-title">
+      A sua primeira análise<br>
+      é <em>completamente gratuita.</em>
+    </h2>
+    <p class="final-sub">
+      Sem cartão de crédito. Sem dados armazenados. Resultados em 2 minutos.
+    </p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="https://sales-lab-lovat.vercel.app" class="btn-primary">
+        Começar grátis
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="mailto:geral@saleslab.cc" class="btn-ghost">Falar com a equipa</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="logo-text">Sales<span>Lab</span></div>
+      <p>Análise financeira com IA para PMEs. Sem consultores. Sem Excel. Em 2 minutos.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Produto</h4>
+      <ul>
+        <li><a href="#produto">Módulos</a></li>
+        <li><a href="#como-funciona">Como funciona</a></li>
+        <li><a href="#precos">Preços</a></li>
+        <li><a href="https://sales-lab-lovat.vercel.app">Entrar na plataforma</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Empresa</h4>
+      <ul>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="mailto:geral@saleslab.cc">Contacto</a></li>
+        <li><a href="mailto:geral@saleslab.cc?subject=Plano Pro">Subscrições</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Contacto</h4>
+      <ul>
+        <li><a href="mailto:geral@saleslab.cc">geral@saleslab.cc</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 SalesLab. Todos os direitos reservados.</p>
+    <div class="footer-legal">
+      <a href="#">Política de Privacidade</a>
+      <a href="#">Termos de Utilização</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // FAQ toggle
+  function toggleFaq(el) {
+    const item = el.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Nav shrink on scroll
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.padding =
+      window.scrollY > 60 ? '12px 48px' : '20px 48px';
+  });
+</script>
+<script>
+async function startCheckout(priceId) {
+  try {
+    const res = await fetch("https://web-production-74559.up.railway.app/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ price_id: priceId }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert("Erro ao iniciar pagamento. Tente novamente.");
+  } catch(e) {
+    alert("Erro ao iniciar pagamento. Tente novamente.");
+  }
+}
+</script>
+</body>
+</html>
